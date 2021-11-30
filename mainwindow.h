@@ -13,12 +13,13 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QTimer>
+#include <QDir>
 
 using namespace cv;
 using namespace dnn;
 using namespace std;
 
-#define MODEL_PATH "/usr/share/opencv4/samples/data/dnn/"
+const string MODEL_PATH = QDir::homePath().toStdString() + "/vision-final/";
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -52,7 +53,7 @@ private:
     // Detection
     float thres = 0.45; // Threshold to detect object
     vector<string> class_names;
-    string class_file = "object_detection_classes_coco.txt"; // define file name with coco class names
+    string class_file = "coco.names"; // define file name with coco class names
     string config_path = "ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt";
     string weights_path = "frozen_inference_graph.pb";
     dnn4_v20211004::Net model;

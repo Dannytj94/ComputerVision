@@ -1,6 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+string last_item = "";
+bool frame_updated = false;
+QString dbName = QString::fromStdString(MODEL_PATH + "products.db");
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -64,7 +68,7 @@ void MainWindow::on_pushButton_open_webcam_clicked()
     model = readNet(MODEL_PATH + config_path, MODEL_PATH + weights_path);
 
     // Connect to our database
-    m_db.setDatabaseName("products.db");
+    m_db.setDatabaseName(dbName);
     if (!m_db.open()) {
         cout << "Error: connection with database failed" << endl;
     } else {
@@ -93,16 +97,19 @@ void MainWindow::update_window()
         ui->productsList->setDisabled(false);
         cart_total = 0;
         cap.release();
+        string ros_cmd = "cd " + MODEL_PATH + " && ./rosrun_wrapper.sh 9.00 1.00 1.00";
+        system(ros_cmd.c_str());
         return;
     }
 
     // Update our name, description, etc. of active item
     auto active_item = ui->shoppingList->item(0);
-
+    string active_item_name = active_item->text().toStdString();
+    
     // Query for this item in the database
     QSqlQuery query;
     query.prepare("SELECT * FROM products WHERE name = (:name)");
-    query.bindValue(":name", QString::fromStdString(active_item->text().toStdString()));
+    query.bindValue(":name", QString::fromStdString(active_item_name));
     if (!query.exec())
         cout << "ERROR: " << query.lastError().text().toStdString() << endl;
 
@@ -112,17 +119,29 @@ void MainWindow::update_window()
     QVariant item_price;
     QVariant item_x;
     QVariant item_y;
+    QVariant item_w;
     if (query.first()) {
         item_name = query.value(1);
         item_desc = query.value(2);
         item_price = query.value(3);
         item_x = query.value(4);
         item_y = query.value(5);
+        item_w = query.value(6);
     }
     ui->nameInputLabel->setText(item_name.toString());
     ui->descriptionInputLabel->setText(item_desc.toString());
     ui->priceInputLabel->setText("$" + item_price.toString());
     ui->locationInputLabel->setText("(" + item_x.toString() + ", " + item_y.toString() + ")");
+
+    if (frame_updated == true){
+        string ros_cmd = "cd " + MODEL_PATH+ " && ./rosrun_wrapper.sh "
+                        + item_x.toString().toStdString() + " " + item_y.toString().toStdString() + " 1.00";
+        system(ros_cmd.c_str());
+        frame_updated = false;
+    } else if (last_item != active_item_name){
+        last_item = active_item_name;
+        frame_updated = true;
+    }
 
     // Copy a frame from the camera
     cap >> frame;

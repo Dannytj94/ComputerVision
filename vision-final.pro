@@ -30,8 +30,9 @@ unix: PKGCONFIG += opencv4
 
 DISTFILES += \
     coco.names \
-    frozen_inference_graph.pb \
     products.db \
+    rosrun_wrapper.sh \
+    frozen_inference_graph.pb \
     ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt
 
 unix: PKGCONFIG += opencv4
